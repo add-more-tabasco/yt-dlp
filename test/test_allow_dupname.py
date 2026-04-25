@@ -11,8 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from yt_dlp import YoutubeDL
 
 
-class TestAutoRenumberFilename(unittest.TestCase):
-    """Test auto-increment duplicate filename feature."""
+class TestAllowDupnameFilename(unittest.TestCase):
+    """Test allow-dupname feature for duplicate filenames."""
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
@@ -22,14 +22,14 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_no_duplicates_returns_original_path(self):
         """File doesn't exist - should return original path."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
         result = ydl._get_auto_numbered_path(filepath)
         self.assertEqual(result, filepath)
 
     def test_single_duplicate_increments_to_one(self):
         """First duplicate should get (1) appended."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
 
         # Create initial file
@@ -42,7 +42,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_multiple_duplicates_increment_sequentially(self):
         """Multiple duplicates should increment (1), (2), (3)..."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
 
         # Create multiple files
@@ -59,7 +59,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_with_complex_filenames(self):
         """Should handle filenames with multiple dots."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.archive.backup.mp4')
 
         with open(filepath, 'w') as f:
@@ -71,7 +71,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_preserves_directory_structure(self):
         """Should maintain directory paths."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         subdir = os.path.join(self.temp_dir, 'videos', 'archive')
         os.makedirs(subdir)
 
@@ -85,19 +85,19 @@ class TestAutoRenumberFilename(unittest.TestCase):
         self.assertTrue(result.startswith(subdir))
 
     def test_incompatible_with_continue(self):
-        """autorenum + --continue should disable autorenum."""
-        ydl = YoutubeDL({'autorenum': True, 'continue_dl': True})
+        """allow-dupname + --continue should disable allow-dupname."""
+        ydl = YoutubeDL({'allow_dupname': True, 'continue_dl': True})
         # Should have been disabled in __init__
-        self.assertFalse(ydl.params.get('autorenum'))
+        self.assertFalse(ydl.params.get('allow_dupname'))
 
     def test_incompatible_with_overwrites(self):
-        """autorenum + --overwrites should disable autorenum."""
-        ydl = YoutubeDL({'autorenum': True, 'overwrites': True})
-        self.assertFalse(ydl.params.get('autorenum'))
+        """allow-dupname + --overwrites should disable allow-dupname."""
+        ydl = YoutubeDL({'allow_dupname': True, 'overwrites': True})
+        self.assertFalse(ydl.params.get('allow_dupname'))
 
     def test_json_files_also_incremented(self):
         """Info JSON should also be auto-numbered."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.info.json')
 
         with open(filepath, 'w') as f:
@@ -109,7 +109,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_subtitle_files_incremented(self):
         """Subtitle files should be auto-numbered."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.en.vtt')
 
         with open(filepath, 'w') as f:
@@ -121,7 +121,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_handles_no_extension(self):
         """Should handle files without extensions."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'README')
 
         with open(filepath, 'w') as f:
@@ -133,7 +133,7 @@ class TestAutoRenumberFilename(unittest.TestCase):
 
     def test_fallback_to_timestamp_on_exhaustion(self):
         """Should fallback to timestamp if (10000) is reached."""
-        ydl = YoutubeDL({'autorenum': True})
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
 
         # Create base file

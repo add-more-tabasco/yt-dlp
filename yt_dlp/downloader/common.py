@@ -431,8 +431,12 @@ class FileDownloader:
         """Download to a filename using the info from info_dict
         Return True on success and False otherwise
         """
+        # Force overwrites when allow_dupname is enabled so download proceeds
+        # The auto-numbering will handle the actual filename
+        effective_overwrites = self.params.get('overwrites', True) or self.params.get('allow_dupname', False)
+        
         nooverwrites_and_exists = (
-            not self.params.get('overwrites', True)
+            not effective_overwrites
             and os.path.exists(filename)
         )
 
@@ -441,6 +445,7 @@ class FileDownloader:
                 self.params.get('continuedl', True)
                 and os.path.isfile(filename)
                 and not self.params.get('nopart', False)
+                and not self.params.get('allow_dupname', False)  # Disable continuedl when allow_dupname is on
             )
 
             # Check file already present

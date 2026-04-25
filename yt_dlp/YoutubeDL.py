@@ -808,21 +808,21 @@ class YoutubeDL:
 
         self._parse_outtmpl()
 
-        # Validate autorenum compatibility
-        if self.params.get('autorenum'):
+        # Validate allow_dupname compatibility
+        if self.params.get('allow_dupname'):
+            # Only check for conflicts if the user explicitly enabled the conflicting option
+            # continuedl defaults to True, so we need to check if it was explicitly set
             conflicting_opts = {
-                'continuedl': self.params.get('continuedl'),
+                'continuedl': self.params.get('continuedl') if '--continue' in sys.argv else False,
                 'overwrites': self.params.get('overwrites'),
                 'nopart': self.params.get('nopart'),
                 'download_archive': self.params.get('download_archive'),
             }
-
             for opt_name, opt_value in conflicting_opts.items():
-                if opt_value is not None and opt_value:
+                if opt_value:
                     self.report_warning(
-                        f'--autorenum is incompatible with --{opt_name.replace("_", "-")}. '
-                        f'Disabling --autorenum.')
-                    self.params['autorenum'] = False
+                        f'--allow-dupname is incompatible with --{opt_name.replace("_", "-")}. Disabling --allow-dupname.')
+                    self.params['allow_dupname'] = False
                     break
 
         # Creating format selector here allows us to catch syntax errors before the extraction
@@ -3374,12 +3374,13 @@ class YoutubeDL:
         # info_dict['_filename'] needs to be set for backward compatibility
         info_dict['_filename'] = full_filename = self.prepare_filename(info_dict, warn=True)
         
-        # Apply auto-numbering if enabled
-        if self.params.get('autorenum'):
+        temp_filename = self.prepare_filename(info_dict, 'temp')
+        
+        # Apply auto-numbering if allow_dupname is enabled
+        if self.params.get('allow_dupname'):
             full_filename = self._get_auto_numbered_path(full_filename)
             info_dict['_filename'] = full_filename
-        
-        temp_filename = self.prepare_filename(info_dict, 'temp')
+            temp_filename = self._get_auto_numbered_path(temp_filename)
         files_to_move = {}
 
         # Forced printings
@@ -3533,7 +3534,7 @@ class YoutubeDL:
 
                     merger = FFmpegMergerPP(self)
                     downloaded = []
-                    if dl_filename is not None:
+                    if dl_filename is not None and not self.params.get('allow_dupname'):
                         self.report_file_already_downloaded(dl_filename)
                     elif fd:
                         if fd != FFmpegFD and temp_filename != '-':
@@ -3598,7 +3599,7 @@ class YoutubeDL:
                         # So we should try to resume the download
                         success, real_download = self.dl(temp_filename, info_dict)
                         info_dict['__real_download'] = real_download
-                    else:
+                    elif not self.params.get('allow_dupname'):
                         self.report_file_already_downloaded(dl_filename)
 
                 dl_filename = dl_filename or temp_filename
@@ -4423,7 +4424,7 @@ class YoutubeDL:
             return None
 
         # Apply auto-numbering if enabled
-        if self.params.get('autorenum') and os.path.exists(infofn):
+        if self.params.get('allow_dupname') and os.path.exists(infofn):
             infofn = self._get_auto_numbered_path(infofn)
         elif not overwrite and os.path.exists(infofn):
             self.to_screen(f'[info] {label.title()} metadata is already present')
@@ -4483,7 +4484,7 @@ class YoutubeDL:
             sub_filename_final = subtitles_filename(sub_filename_base, sub_lang, sub_format, info_dict.get('ext'))
             
             # Apply auto-numbering if enabled
-            if self.params.get('autorenum'):
+            if self.params.get('allow_dupname'):
                 sub_filename = self._get_auto_numbered_path(sub_filename)
                 sub_filename_final = self._get_auto_numbered_path(sub_filename_final)
             

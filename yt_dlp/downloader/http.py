@@ -167,15 +167,17 @@ class HttpFD(FileDownloader):
                             # I decided to implement a suggested change and consider the file
                             # completely downloaded if the file size differs less than 100 bytes from
                             # the one in the hard drive.
-                            self.report_file_already_downloaded(ctx.filename)
-                            self.try_rename(ctx.tmpfilename, ctx.filename)
-                            self._hook_progress({
-                                'filename': ctx.filename,
-                                'status': 'finished',
-                                'downloaded_bytes': ctx.resume_len,
-                                'total_bytes': ctx.resume_len,
-                            }, info_dict)
-                            raise SucceedDownload
+                            # Skip this check when allow_dupname is enabled to allow auto-numbering
+                            if not self.params.get('allow_dupname'):
+                                self.report_file_already_downloaded(ctx.filename)
+                                self.try_rename(ctx.tmpfilename, ctx.filename)
+                                self._hook_progress({
+                                    'filename': ctx.filename,
+                                    'status': 'finished',
+                                    'downloaded_bytes': ctx.resume_len,
+                                    'total_bytes': ctx.resume_len,
+                                }, info_dict)
+                                raise SucceedDownload
                         else:
                             # The length does not match, we start the download over
                             self.report_unable_to_resume()

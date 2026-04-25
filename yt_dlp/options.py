@@ -1452,17 +1452,17 @@ def create_parser():
         action='store_false', dest='overwrites', default=None,
         help='Do not overwrite any files')
     filesystem.add_option(
-        '--autorenum',
-        action='store_true', dest='autorenum', default=False,
-        help='Auto-number duplicates by appending (n) to filename. Incompatible with --continue, --overwrites, --no-part, --download-archive')
-    filesystem.add_option(
-        '--no-autorenum',
-        action='store_false', dest='autorenum',
-        help='Do not auto-number duplicate files (default)')
-    filesystem.add_option(
         '--force-overwrites', '--yes-overwrites',
         action='store_true', dest='overwrites',
         help='Overwrite all video and metadata files. This option includes --no-continue')
+    filesystem.add_option(
+        '--allow-dupname',
+        action='store_true', dest='allow_dupname', default=None,
+        help='Allow duplicate filenames by appending (n) when file exists. Incompatible with --continue, --overwrites, --no-part, --download-archive')
+    filesystem.add_option(
+        '--no-allow-dupname',
+        action='store_false', dest='allow_dupname',
+        help='Do not allow duplicate filenames (default)')
     filesystem.add_option(
         '--no-force-overwrites',
         action='store_const', dest='overwrites', const=None,
