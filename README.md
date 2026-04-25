@@ -679,6 +679,10 @@ Tip: Use `CTRL`+`F` (or `Command`+`F`)  to search by keywords
                                     extension) to the specified number of
                                     characters
     -w, --no-overwrites             Do not overwrite any files
+    --autorenum                     Auto-number duplicates by appending (n) to
+                                    filename. Incompatible with --continue,
+                                    --overwrites, --no-part, --download-archive
+    --no-autorenum                  Do not auto-number duplicate files (default)
     --force-overwrites              Overwrite all video and metadata files. This
                                     option includes --no-continue
     --no-force-overwrites           Do not overwrite the video, but overwrite

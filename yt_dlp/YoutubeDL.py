@@ -808,6 +808,23 @@ class YoutubeDL:
 
         self._parse_outtmpl()
 
+        # Validate autorenum compatibility
+        if self.params.get('autorenum'):
+            conflicting_opts = {
+                'continuedl': self.params.get('continuedl'),
+                'overwrites': self.params.get('overwrites'),
+                'nopart': self.params.get('nopart'),
+                'download_archive': self.params.get('download_archive'),
+            }
+
+            for opt_name, opt_value in conflicting_opts.items():
+                if opt_value is not None and opt_value:
+                    self.report_warning(
+                        f'--autorenum is incompatible with --{opt_name.replace("_", "-")}. '
+                        f'Disabling --autorenum.')
+                    self.params['autorenum'] = False
+                    break
+
         # Creating format selector here allows us to catch syntax errors before the extraction
         self.format_selector = (
             self.params.get('format') if self.params.get('format') in (None, '-')
@@ -3294,6 +3311,38 @@ class YoutubeDL:
             os.remove(file)
         return None
 
+    def _get_auto_numbered_path(self, filepath):
+        """Generate unique filepath by auto-numbering when file exists.
+
+        Returns the original filepath if it doesn't exist, otherwise appends (n)
+        and increments until finding an unused name.
+
+        Args:
+            filepath: The desired output path
+
+        Returns:
+            A unique filepath that doesn't exist yet
+        """
+        if not os.path.exists(filepath):
+            return filepath
+
+        dirname = os.path.dirname(filepath) or '.'
+        basename = os.path.basename(filepath)
+        name, ext = os.path.splitext(basename)
+
+        counter = 1
+        while counter <= 10000:  # Prevent infinite loops
+            new_name = f'{name} ({counter}){ext}'
+            new_path = os.path.join(dirname, new_name)
+            if not os.path.exists(new_path):
+                return new_path
+            counter += 1
+
+        # Fallback to epoch if exhausted counter
+        timestamp = int(time.time() * 1000)
+        new_name = f'{name} ({timestamp}){ext}'
+        return os.path.join(dirname, new_name)
+
     @_catch_unsafe_extension_error
     def process_info(self, info_dict):
         """Process a single resolved IE result. (Modifies it in-place)"""
@@ -3324,6 +3373,12 @@ class YoutubeDL:
 
         # info_dict['_filename'] needs to be set for backward compatibility
         info_dict['_filename'] = full_filename = self.prepare_filename(info_dict, warn=True)
+        
+        # Apply auto-numbering if enabled
+        if self.params.get('autorenum'):
+            full_filename = self._get_auto_numbered_path(full_filename)
+            info_dict['_filename'] = full_filename
+        
         temp_filename = self.prepare_filename(info_dict, 'temp')
         files_to_move = {}
 
@@ -4366,6 +4421,10 @@ class YoutubeDL:
             return False
         elif not self._ensure_dir_exists(infofn):
             return None
+
+        # Apply auto-numbering if enabled
+        if self.params.get('autorenum') and os.path.exists(infofn):
+            infofn = self._get_auto_numbered_path(infofn)
         elif not overwrite and os.path.exists(infofn):
             self.to_screen(f'[info] {label.title()} metadata is already present')
             return 'exists'
@@ -4422,6 +4481,12 @@ class YoutubeDL:
             sub_format = sub_info['ext']
             sub_filename = subtitles_filename(filename, sub_lang, sub_format, info_dict.get('ext'))
             sub_filename_final = subtitles_filename(sub_filename_base, sub_lang, sub_format, info_dict.get('ext'))
+            
+            # Apply auto-numbering if enabled
+            if self.params.get('autorenum'):
+                sub_filename = self._get_auto_numbered_path(sub_filename)
+                sub_filename_final = self._get_auto_numbered_path(sub_filename_final)
+            
             existing_sub = self.existing_file((sub_filename_final, sub_filename))
             if existing_sub:
                 self.to_screen(f'[info] Video subtitle {sub_lang}.{sub_format} is already present')
