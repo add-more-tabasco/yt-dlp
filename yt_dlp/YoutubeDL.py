@@ -810,10 +810,11 @@ class YoutubeDL:
 
         # Validate allow_dupname compatibility
         if self.params.get('allow_dupname'):
-            # Only check for conflicts if the user explicitly enabled the conflicting option
+            # Check for conflicting options
             # continuedl defaults to True, so we need to check if it was explicitly set
+            # by checking if it's in sys.argv
             conflicting_opts = {
-                'continuedl': self.params.get('continuedl') if '--continue' in sys.argv else False,
+                'continuedl': '--continue' in sys.argv,
                 'overwrites': self.params.get('overwrites'),
                 'nopart': self.params.get('nopart'),
                 'download_archive': self.params.get('download_archive'),
@@ -3328,7 +3329,18 @@ class YoutubeDL:
 
         dirname = os.path.dirname(filepath) or '.'
         basename = os.path.basename(filepath)
-        name, ext = os.path.splitext(basename)
+        
+        # Handle double extensions like .info.json, .en.vtt
+        # Find the last dot and check if the extension is a known double extension
+        known_double_exts = ('.info.json', '.en.vtt', '.en.srt', '.en.ass', '.en.ssa')
+        for double_ext in known_double_exts:
+            if basename.endswith(double_ext):
+                name = basename[:-len(double_ext)]
+                ext = double_ext
+                break
+        else:
+            # Single extension
+            name, ext = os.path.splitext(basename)
 
         counter = 1
         while counter <= 10000:  # Prevent infinite loops
