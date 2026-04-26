@@ -4,6 +4,14 @@
 # To create a release, dispatch the https://github.com/yt-dlp/yt-dlp/actions/workflows/release.yml workflow on master
 -->
 
+### 2026.04.26
+
+#### New features
+- **filesystem**: [Add `--allow-dupname` option to auto-number duplicate filenames](https://github.com/add-more-tabasco/yt-dlp/commit/4ef7b554c) by [add-more-tabasco](https://github.com/add-more-tabasco)
+    - When a file with the same name already exists, yt-dlp will automatically append a counter (e.g., `video.webm` → `video (1).webm`)
+    - Useful when downloading generically-titled videos to the same folder
+    - Incompatible with `--continue`, `--overwrites`, `--no-part`, `--download-archive`
+
 ### 2026.03.17
 
 #### Extractor changes
@@ -17,12 +25,6 @@
 - **ci**: [Bump actions pins](https://github.com/yt-dlp/yt-dlp/commit/4fc768b7f7194a05b13ad3e7bc5bfde84ed9ede7) ([#16252](https://github.com/yt-dlp/yt-dlp/issues/16252)) by [bashonly](https://github.com/bashonly)
 - **docs**: [Fix `player_client` extractor-arg documentation](https://github.com/yt-dlp/yt-dlp/commit/e68afb28277b4bee39726dbcbb06801edde9f659) ([#16235](https://github.com/yt-dlp/yt-dlp/issues/16235)) by [bashonly](https://github.com/bashonly)
 - **test**: networking: [Mark all CurlCFFIRH tests as flaky for any OS](https://github.com/yt-dlp/yt-dlp/commit/18656b2f2af41a138793c7012a88f467c0d90274) ([#16266](https://github.com/yt-dlp/yt-dlp/issues/16266)) by [bashonly](https://github.com/bashonly)
-
-#### New features
-- **filesystem**: [Add `--allow-dupname` option to auto-number duplicate filenames](https://github.com/add-more-tabasco/yt-dlp/commit/4ef7b554c) by [add-more-tabasco](https://github.com/add-more-tabasco)
-    - When a file with the same name already exists, yt-dlp will automatically append a counter (e.g., `video.webm` → `video (1).webm`)
-    - Useful when downloading generically-titled videos to the same folder
-    - Incompatible with `--continue`, `--overwrites`, `--no-part`, `--download-archive`
 
 ### 2026.03.13
 
