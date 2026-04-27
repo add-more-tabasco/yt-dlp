@@ -958,6 +958,7 @@ def parse_options(argv=None):
         '_deprecation_warnings': deprecation_warnings,
         'compat_opts': opts.compat_opts,
         'allow_dupname': opts.allow_dupname,
+        'skip_identical': opts.skip_identical,
     })
 
 

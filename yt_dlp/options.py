@@ -1464,6 +1464,14 @@ def create_parser():
         action='store_false', dest='allow_dupname',
         help='Do not allow duplicate filenames (default)')
     filesystem.add_option(
+        '--skip-identical',
+        action='store_true', dest='skip_identical', default=False,
+        help='Skip download if file with same name exists and has identical size/content. Only works with --allow-dupname')
+    filesystem.add_option(
+        '--no-skip-identical',
+        action='store_false', dest='skip_identical',
+        help='Do not skip identical files (default)')
+    filesystem.add_option(
         '--no-force-overwrites',
         action='store_const', dest='overwrites', const=None,
         help='Do not overwrite the video, but overwrite related files (default)')

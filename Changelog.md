@@ -11,6 +11,10 @@
     - When a file with the same name already exists, yt-dlp will automatically append a counter (e.g., `video.webm` → `video (1).webm`)
     - Useful when downloading generically-titled videos to the same folder
     - Incompatible with `--continue`, `--overwrites`, `--no-part`, `--download-archive`
+- **filesystem**: [Add `--skip-identical` option to skip downloads of identical files](https://github.com/add-more-tabasco/yt-dlp) by [add-more-tabasco](https://github.com/add-more-tabasco)
+    - When used with `--allow-dupname`, skips download if existing file has same size as expected download
+    - Prevents redundant downloads when re-running commands on same URLs
+    - Only works when filesize is known beforehand
 
 ### 2026.03.17
 

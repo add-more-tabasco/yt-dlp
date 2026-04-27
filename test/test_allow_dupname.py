@@ -153,6 +153,51 @@ class TestAllowDupnameFilename(unittest.TestCase):
         self.assertIn(')', result)
         self.assertTrue(result.endswith('.mp4'))
 
+    def test_skip_identical_same_size(self):
+        """skip_identical should return True when file exists with same size."""
+        ydl = YoutubeDL({'skip_identical': True})
+        filepath = os.path.join(self.temp_dir, 'video.mp4')
+
+        # Create file with known size
+        content = b'x' * 1000
+        with open(filepath, 'wb') as f:
+            f.write(content)
+
+        result = ydl._is_identical_file(filepath, 1000)
+        self.assertTrue(result)
+
+    def test_skip_identical_different_size(self):
+        """skip_identical should return False when file exists with different size."""
+        ydl = YoutubeDL({'skip_identical': True})
+        filepath = os.path.join(self.temp_dir, 'video.mp4')
+
+        # Create file with known size
+        with open(filepath, 'wb') as f:
+            f.write(b'x' * 1000)
+
+        result = ydl._is_identical_file(filepath, 2000)
+        self.assertFalse(result)
+
+    def test_skip_identical_no_expected_size(self):
+        """skip_identical should return False when no expected size provided."""
+        ydl = YoutubeDL({'skip_identical': True})
+        filepath = os.path.join(self.temp_dir, 'video.mp4')
+
+        # Create file
+        with open(filepath, 'wb') as f:
+            f.write(b'x' * 1000)
+
+        result = ydl._is_identical_file(filepath, None)
+        self.assertFalse(result)
+
+    def test_skip_identical_file_not_exists(self):
+        """skip_identical should return False when file doesn't exist."""
+        ydl = YoutubeDL({'skip_identical': True})
+        filepath = os.path.join(self.temp_dir, 'video.mp4')
+
+        result = ydl._is_identical_file(filepath, 1000)
+        self.assertFalse(result)
+
 
 if __name__ == '__main__':
     unittest.main()
