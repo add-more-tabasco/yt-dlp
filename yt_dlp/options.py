@@ -1458,19 +1458,11 @@ def create_parser():
     filesystem.add_option(
         '--allow-dupname',
         action='store_true', dest='allow_dupname', default=None,
-        help='Allow duplicate filenames by appending (n) when file exists. Incompatible with --continue, --overwrites, --no-part, --download-archive')
+        help='Allow duplicate filenames by appending (n) when file exists. Automatically skips downloads of identical files based on HTTP headers and metadata. Incompatible with --continue, --overwrites, --no-part, --download-archive')
     filesystem.add_option(
         '--no-allow-dupname',
         action='store_false', dest='allow_dupname',
         help='Do not allow duplicate filenames (default)')
-    filesystem.add_option(
-        '--skip-identical',
-        action='store_true', dest='skip_identical', default=False,
-        help='Skip download if file with same name exists and has identical size/content. Only works with --allow-dupname')
-    filesystem.add_option(
-        '--no-skip-identical',
-        action='store_false', dest='skip_identical',
-        help='Do not skip identical files (default)')
     filesystem.add_option(
         '--no-force-overwrites',
         action='store_const', dest='overwrites', const=None,

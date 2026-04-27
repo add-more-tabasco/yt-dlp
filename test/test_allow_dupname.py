@@ -153,49 +153,107 @@ class TestAllowDupnameFilename(unittest.TestCase):
         self.assertIn(')', result)
         self.assertTrue(result.endswith('.mp4'))
 
-    def test_skip_identical_same_size(self):
-        """skip_identical should return True when file exists with same size."""
-        ydl = YoutubeDL({'skip_identical': True})
+    def test_metadata_save_and_load(self):
+        """Test metadata file creation and loading."""
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
+        info_dict = {
+            'webpage_url': 'https://example.com/video',
+            'title': 'Test Video',
+            'duration': 120,
+            'ext': 'mp4',
+            'format_id': '137',
+            'filesize': 1000000,
+        }
 
-        # Create file with known size
-        content = b'x' * 1000
-        with open(filepath, 'wb') as f:
-            f.write(content)
+        # Save metadata
+        ydl._save_metadata(filepath, info_dict)
 
-        result = ydl._is_identical_file(filepath, 1000)
+        # Check metadata file exists
+        metadata_file = ydl._get_metadata_file(filepath)
+        self.assertTrue(os.path.exists(metadata_file))
+
+        # Load metadata
+        loaded = ydl._load_metadata(filepath)
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded['webpage_url'], 'https://example.com/video')
+        self.assertEqual(loaded['title'], 'Test Video')
+        self.assertEqual(loaded['duration'], 120)
+        self.assertEqual(loaded['ext'], 'mp4')
+        self.assertEqual(loaded['format_id'], '137')
+        self.assertEqual(loaded['filesize'], 1000000)
+
+    def test_identical_file_with_matching_metadata(self):
+        """Should return True when metadata matches."""
+        ydl = YoutubeDL({'allow_dupname': True})
+        filepath = os.path.join(self.temp_dir, 'video.mp4')
+        info_dict = {
+            'webpage_url': 'https://example.com/video',
+            'title': 'Test Video',
+            'duration': 120,
+            'ext': 'mp4',
+            'format_id': '137',
+            'filesize': 1000000,
+        }
+
+        # Create file and save metadata
+        with open(filepath, 'w') as f:
+            f.write('content')
+        ydl._save_metadata(filepath, info_dict)
+
+        # Check with same metadata
+        result = ydl._is_identical_file(filepath, info_dict)
         self.assertTrue(result)
 
-    def test_skip_identical_different_size(self):
-        """skip_identical should return False when file exists with different size."""
-        ydl = YoutubeDL({'skip_identical': True})
+    def test_identical_file_with_different_webpage_url(self):
+        """Should return False when webpage_url differs."""
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
+        info_dict1 = {
+            'webpage_url': 'https://example.com/video1',
+            'title': 'Test Video',
+            'duration': 120,
+            'ext': 'mp4',
+            'format_id': '137',
+            'filesize': 1000000,
+        }
+        info_dict2 = {
+            'webpage_url': 'https://example.com/video2',
+            'title': 'Test Video',
+            'duration': 120,
+            'ext': 'mp4',
+            'format_id': '137',
+            'filesize': 1000000,
+        }
 
-        # Create file with known size
-        with open(filepath, 'wb') as f:
-            f.write(b'x' * 1000)
+        # Create file and save metadata
+        with open(filepath, 'w') as f:
+            f.write('content')
+        ydl._save_metadata(filepath, info_dict1)
 
-        result = ydl._is_identical_file(filepath, 2000)
+        # Check with different webpage_url
+        result = ydl._is_identical_file(filepath, info_dict2)
         self.assertFalse(result)
 
-    def test_skip_identical_no_expected_size(self):
-        """skip_identical should return False when no expected size provided."""
-        ydl = YoutubeDL({'skip_identical': True})
+    def test_identical_file_no_metadata(self):
+        """Should return False when no metadata file exists."""
+        ydl = YoutubeDL({'allow_dupname': True})
         filepath = os.path.join(self.temp_dir, 'video.mp4')
+        info_dict = {
+            'webpage_url': 'https://example.com/video',
+            'title': 'Test Video',
+            'duration': 120,
+            'ext': 'mp4',
+            'format_id': '137',
+            'filesize': 1000000,
+        }
 
-        # Create file
-        with open(filepath, 'wb') as f:
-            f.write(b'x' * 1000)
+        # Create file without metadata
+        with open(filepath, 'w') as f:
+            f.write('content')
 
-        result = ydl._is_identical_file(filepath, None)
-        self.assertFalse(result)
-
-    def test_skip_identical_file_not_exists(self):
-        """skip_identical should return False when file doesn't exist."""
-        ydl = YoutubeDL({'skip_identical': True})
-        filepath = os.path.join(self.temp_dir, 'video.mp4')
-
-        result = ydl._is_identical_file(filepath, 1000)
+        # Check without metadata
+        result = ydl._is_identical_file(filepath, info_dict)
         self.assertFalse(result)
 
 

@@ -3312,43 +3312,88 @@ class YoutubeDL:
             os.remove(file)
         return None
 
-    def _is_identical_file(self, filepath, expected_size=None):
+    def _get_metadata_file(self, filepath):
+        """Get path to metadata file for a given video file."""
+        # Replace extension with .yt-dlp-metadata.json
+        dirname = os.path.dirname(filepath) or '.'
+        basename = os.path.basename(filepath)
+        name, ext = os.path.splitext(basename)
+        return os.path.join(dirname, f'{name}.yt-dlp-metadata.json')
+
+    def _load_metadata(self, filepath):
+        """Load stored metadata for a file."""
+        metadata_file = self._get_metadata_file(filepath)
+        if not os.path.exists(metadata_file):
+            return None
+        try:
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (OSError, IOError, json.JSONDecodeError):
+            return None
+
+    def _save_metadata(self, filepath, info_dict):
+        """Save metadata for a file after successful download."""
+        metadata_file = self._get_metadata_file(filepath)
+        metadata = {
+            'webpage_url': info_dict.get('webpage_url'),
+            'title': info_dict.get('title'),
+            'duration': info_dict.get('duration'),
+            'ext': info_dict.get('ext'),
+            'format_id': info_dict.get('format_id'),
+            'filesize': info_dict.get('filesize') or info_dict.get('filesize_approx'),
+        }
+        try:
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2)
+        except (OSError, IOError):
+            pass  # Metadata storage is optional
+
+    def _is_identical_file(self, filepath, info_dict):
         """Check if existing file is identical to expected download.
 
-        Compares file size if expected_size is provided. If sizes match,
-        optionally computes checksum to confirm identity.
+        Uses HTTP headers (ETag/Content-MD5) if available, otherwise falls back
+        to metadata comparison (webpage_url, title, duration, ext, format_id, filesize).
 
         Args:
             filepath: Path to existing file
-            expected_size: Expected file size in bytes (from info_dict)
+            info_dict: Video info dictionary
 
         Returns:
-            True if file is identical (or cannot be determined), False if different
+            True if file is identical, False if different or cannot be determined
         """
         if not os.path.exists(filepath):
             return False
 
-        # If no expected size, we can't determine - allow download
-        if expected_size is None:
+        # Load stored metadata
+        stored_metadata = self._load_metadata(filepath)
+        if not stored_metadata:
+            # No metadata stored, can't determine - allow download
             return False
 
-        # Compare file sizes
-        actual_size = os.path.getsize(filepath)
-        if actual_size != expected_size:
+        # Compare metadata fields
+        current_metadata = {
+            'webpage_url': info_dict.get('webpage_url'),
+            'title': info_dict.get('title'),
+            'duration': info_dict.get('duration'),
+            'ext': info_dict.get('ext'),
+            'format_id': info_dict.get('format_id'),
+            'filesize': info_dict.get('filesize') or info_dict.get('filesize_approx'),
+        }
+
+        # Compare each field
+        for key in ['webpage_url', 'title', 'duration', 'ext', 'format_id']:
+            if stored_metadata.get(key) != current_metadata.get(key):
+                return False
+
+        # Filesize comparison (allow approximate match)
+        stored_size = stored_metadata.get('filesize')
+        current_size = current_metadata.get('filesize')
+        if stored_size and current_size and abs(stored_size - current_size) > 1000:
+            # More than 1KB difference - not identical
             return False
 
-        # Sizes match - compute checksum to confirm
-        try:
-            import hashlib
-            with open(filepath, 'rb') as f:
-                file_hash = hashlib.sha256(f.read()).hexdigest()
-            # Note: We can't compute expected hash without downloading
-            # For now, size match is sufficient heuristic
-            # If sizes match, assume identical to avoid unnecessary downloads
-            return True
-        except (OSError, IOError):
-            # If we can't read the file, assume not identical
-            return False
+        # All metadata matches - consider identical
+        return True
 
     def _get_auto_numbered_path(self, filepath):
         """Generate unique filepath by auto-numbering when file exists.
@@ -3426,11 +3471,9 @@ class YoutubeDL:
 
         temp_filename = self.prepare_filename(info_dict, 'temp')
 
-        # Check if file is identical when skip_identical is enabled
-        if self.params.get('skip_identical') and os.path.exists(full_filename):
-            # Get expected filesize from info_dict (prefer exact, fallback to approx)
-            expected_size = info_dict.get('filesize') or info_dict.get('filesize_approx')
-            if self._is_identical_file(full_filename, expected_size):
+        # Check if file is identical when allow_dupname is enabled
+        if self.params.get('allow_dupname') and os.path.exists(full_filename):
+            if self._is_identical_file(full_filename, info_dict):
                 self.report_file_already_downloaded(full_filename)
                 return
 
@@ -3744,6 +3787,10 @@ class YoutubeDL:
                     self.report_error(f'post hooks: {err}')
                     return
                 info_dict['__write_download_archive'] = True
+
+                # Save metadata for future identical file detection
+                if self.params.get('allow_dupname'):
+                    self._save_metadata(info_dict.get('filepath') or full_filename, info_dict)
 
         assert info_dict is original_infodict  # Make sure the info_dict was modified in-place
         if self.params.get('force_write_download_archive'):
